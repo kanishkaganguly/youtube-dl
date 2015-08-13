@@ -8,7 +8,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import javax.swing.DefaultListModel;
 import javax.swing.JFileChooser;
+import javax.swing.SwingWorker;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -21,11 +23,13 @@ import javax.swing.JFileChooser;
  */
 public class main extends javax.swing.JFrame {
 
-    public static downloader d;
+    public downloader d;
     final JFileChooser fc = new JFileChooser();
     File save_path = null;
     File default_path = new File("C:\\Users\\" + System.getProperty("user.name") + "\\Videos\\youtube-dl");
     int run = 0;
+    DefaultListModel queue_model;
+    int q_count = 0;
 
     /**
      * Creates new form main
@@ -44,19 +48,27 @@ public class main extends javax.swing.JFrame {
     private void initComponents() {
 
         help_frame = new javax.swing.JFrame();
-        jLabel1 = new javax.swing.JLabel();
+        header_lbl = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
-        jLabel2 = new javax.swing.JLabel();
+        url_lbl = new javax.swing.JLabel();
         url = new javax.swing.JTextField();
         start_btn = new javax.swing.JButton();
         choose_save = new javax.swing.JButton();
         show_save = new javax.swing.JLabel();
         clear_save = new javax.swing.JButton();
         status = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
+        status_lbl = new javax.swing.JLabel();
         progress = new javax.swing.JProgressBar();
         stop_btn = new javax.swing.JButton();
-        jMenuBar1 = new javax.swing.JMenuBar();
+        queuePanel = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        show_q = new javax.swing.JList();
+        q_lbl = new javax.swing.JLabel();
+        url_q = new javax.swing.JTextField();
+        add_q = new javax.swing.JButton();
+        clear_q = new javax.swing.JButton();
+        use_q = new javax.swing.JCheckBox();
+        main_menuBar = new javax.swing.JMenuBar();
         file_menu = new javax.swing.JMenu();
         menu_start = new javax.swing.JMenuItem();
         menu_stop = new javax.swing.JMenuItem();
@@ -85,11 +97,11 @@ public class main extends javax.swing.JFrame {
             }
         });
 
-        jLabel1.setFont(new java.awt.Font("Tahoma", 1, 24)); // NOI18N
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setText("Youtube Downloader");
+        header_lbl.setFont(new java.awt.Font("Tahoma", 1, 24)); // NOI18N
+        header_lbl.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        header_lbl.setText("Youtube Downloader");
 
-        jLabel2.setText("Enter URL");
+        url_lbl.setText("Enter URL");
 
         url.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -122,7 +134,7 @@ public class main extends javax.swing.JFrame {
         status.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         status.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        jLabel4.setText("Status");
+        status_lbl.setText("Status");
 
         progress.setStringPainted(true);
 
@@ -130,6 +142,74 @@ public class main extends javax.swing.JFrame {
         stop_btn.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 stop_btnMouseClicked(evt);
+            }
+        });
+
+        queuePanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Queue"));
+
+        show_q.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        jScrollPane1.setViewportView(show_q);
+
+        q_lbl.setText("Add To Queue");
+
+        url_q.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                url_qMouseClicked(evt);
+            }
+        });
+
+        add_q.setText("Add To Queue");
+        add_q.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                add_qMouseClicked(evt);
+            }
+        });
+
+        clear_q.setText("Clear Queue");
+        clear_q.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                clear_qMouseClicked(evt);
+            }
+        });
+
+        javax.swing.GroupLayout queuePanelLayout = new javax.swing.GroupLayout(queuePanel);
+        queuePanel.setLayout(queuePanelLayout);
+        queuePanelLayout.setHorizontalGroup(
+            queuePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(queuePanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(queuePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1)
+                    .addGroup(queuePanelLayout.createSequentialGroup()
+                        .addComponent(q_lbl)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(url_q))
+                    .addGroup(queuePanelLayout.createSequentialGroup()
+                        .addComponent(add_q, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(clear_q, javax.swing.GroupLayout.DEFAULT_SIZE, 164, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        queuePanelLayout.setVerticalGroup(
+            queuePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, queuePanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(queuePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(q_lbl)
+                    .addComponent(url_q, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, Short.MAX_VALUE)
+                .addGroup(queuePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(add_q)
+                    .addComponent(clear_q))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+
+        use_q.setText("Use Download Queue");
+        use_q.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                use_qStateChanged(evt);
             }
         });
 
@@ -163,7 +243,7 @@ public class main extends javax.swing.JFrame {
         });
         file_menu.add(menu_quit);
 
-        jMenuBar1.add(file_menu);
+        main_menuBar.add(file_menu);
 
         help_menu.setText("Help");
 
@@ -175,9 +255,9 @@ public class main extends javax.swing.JFrame {
         });
         help_menu.add(menu_howto);
 
-        jMenuBar1.add(help_menu);
+        main_menuBar.add(help_menu);
 
-        setJMenuBar(jMenuBar1);
+        setJMenuBar(main_menuBar);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -187,54 +267,64 @@ public class main extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(status, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(header_lbl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(url))
-                    .addComponent(show_save, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(choose_save, javax.swing.GroupLayout.PREFERRED_SIZE, 190, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(clear_save, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(progress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel4)
-                        .addGap(0, 337, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(start_btn, javax.swing.GroupLayout.PREFERRED_SIZE, 191, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(stop_btn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(status, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(url_lbl)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(url))
+                            .addComponent(show_save, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(choose_save, javax.swing.GroupLayout.PREFERRED_SIZE, 190, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(clear_save, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(progress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(start_btn, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(stop_btn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(status_lbl)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(use_q, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(queuePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1)
+                .addComponent(header_lbl)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(url, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addComponent(show_save, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(choose_save)
-                    .addComponent(clear_save))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jLabel4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(progress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(status, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(start_btn)
-                    .addComponent(stop_btn))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(url_lbl)
+                            .addComponent(url, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(18, 18, 18)
+                        .addComponent(show_save, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(choose_save)
+                            .addComponent(clear_save))
+                        .addGap(18, 18, 18)
+                        .addComponent(use_q)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(status_lbl)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(progress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(status, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(start_btn)
+                            .addComponent(stop_btn)))
+                    .addComponent(queuePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -245,10 +335,21 @@ public class main extends javax.swing.JFrame {
         if (!default_path.exists()) {
             default_path.mkdirs();
         }
-        d = new downloader("Downloader");
-        d.start();
-        start_btn.setEnabled(false);
-        stop_btn.setEnabled(true);
+        if (use_q.isSelected()) {
+            start_btn.setEnabled(false);
+            stop_btn.setEnabled(true);
+            q_count = queue_model.getSize();
+            for (int i = 0; i < q_count; i++) {
+                show_q.setSelectedIndex(i);
+                d = new downloader((String) queue_model.getElementAt(i), i);
+                d.execute();
+            }
+        } else {
+            start_btn.setEnabled(false);
+            stop_btn.setEnabled(true);
+            d = new downloader(url.getText(), -1);
+            d.execute();
+        }
     }//GEN-LAST:event_start_btnMouseClicked
 
     private void choose_saveMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_choose_saveMouseClicked
@@ -269,6 +370,8 @@ public class main extends javax.swing.JFrame {
         if (run == 0) {
             show_save.setText("C:\\Users\\" + System.getProperty("user.name") + "\\Videos\\youtube-dl");
             run = 1;
+            queue_model = new DefaultListModel();
+            show_q.setModel(queue_model);
         }
     }//GEN-LAST:event_formWindowActivated
 
@@ -276,8 +379,7 @@ public class main extends javax.swing.JFrame {
         progress.setValue(0);
         progress.setString("0%");
         status.setText("Download Cancelled");
-        d.stop();
-        d.destroy();
+        d.cancel(true);
     }//GEN-LAST:event_stop_btnMouseClicked
 
     private void urlMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_urlMouseClicked
@@ -313,21 +415,62 @@ public class main extends javax.swing.JFrame {
         help_frame.setVisible(true);
     }//GEN-LAST:event_menu_howtoMouseClicked
 
-    public class downloader extends Thread {
+    private void url_qMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_url_qMouseClicked
+        java.awt.datatransfer.Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        Transferable clipData = clipboard.getContents(clipboard);
+        if (clipData != null) {
+            try {
+                if (clipData.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                    String s = (String) (clipData.getTransferData(DataFlavor.stringFlavor));
+                    url_q.setText(s);
+                }
+            } catch (UnsupportedFlavorException ufe) {
+                System.err.println("Flavor unsupported: " + ufe);
+            } catch (IOException ioe) {
+                System.err.println("Data not available: " + ioe);
+            }
+        }
+    }//GEN-LAST:event_url_qMouseClicked
 
-        public downloader(String str) {
-            super(str);
+    private void add_qMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_add_qMouseClicked
+        queue_model.addElement(url_q.getText());
+        url_q.setText("");
+    }//GEN-LAST:event_add_qMouseClicked
+
+    private void clear_qMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_clear_qMouseClicked
+        queue_model = new DefaultListModel();
+        show_q.setModel(queue_model);
+        queue_model.removeAllElements();
+        url_q.setText("");
+    }//GEN-LAST:event_clear_qMouseClicked
+
+    private void use_qStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_use_qStateChanged
+        if (use_q.isSelected()) {
+            url.setEnabled(false);
+        } else {
+            url.setEnabled(true);
+        }
+    }//GEN-LAST:event_use_qStateChanged
+
+    public class downloader extends SwingWorker<Void, Integer> {
+
+        String url_here;
+        int list_index;
+
+        public downloader(String url, int index) {
+            this.url_here = url;
+            this.list_index = index;
         }
 
         @Override
-        public void run() {
+        protected Void doInBackground() {
             if (save_path == null) {
                 save_path = default_path;
             }
 
             System.out.println("Thread Start");
             try {
-                ProcessBuilder proc = new ProcessBuilder("lib\\youtube-dl.exe", url.getText());
+                ProcessBuilder proc = new ProcessBuilder("lib\\youtube-dl.exe", url_here);
                 Process process = proc.directory(save_path).start();
                 InputStream is = process.getInputStream();
                 InputStreamReader isr = new InputStreamReader(is);
@@ -342,14 +485,13 @@ public class main extends javax.swing.JFrame {
                         status.setText(text_stat);
                         String prog_str = (stat.substring(0, stat.indexOf("o") - 1)).replaceAll("%", "");
                         if ((int) Double.parseDouble(prog_str) == 100) {
+                            setProgress(100);
                             progress.setValue(100);
                             progress.setString("100%");
-                            start_btn.setEnabled(true);
-                            stop_btn.setEnabled(false);
+
                             status.setText("Download Complete");
-                            d.stop();
-                            d.destroy();
                         } else {
+                            setProgress((int) Double.parseDouble(prog_str));
                             progress.setValue((int) Double.parseDouble(prog_str));
                             progress.setString(prog_str + "%");
                         }
@@ -360,8 +502,17 @@ public class main extends javax.swing.JFrame {
             } catch (IOException ex) {
                 System.out.println(ex);
             }
+            return null;
         }
 
+        @Override
+        protected void done() {
+            if (use_q.isSelected()) {
+                queue_model.removeElementAt(list_index);
+            }
+            start_btn.setEnabled(true);
+            stop_btn.setEnabled(false);
+        }
     }
 
     /**
@@ -401,26 +552,34 @@ public class main extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton add_q;
     private javax.swing.JButton choose_save;
+    private javax.swing.JButton clear_q;
     private javax.swing.JButton clear_save;
     private javax.swing.JMenu file_menu;
+    private javax.swing.JLabel header_lbl;
     private javax.swing.JFrame help_frame;
     private javax.swing.JMenu help_menu;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JPopupMenu.Separator jSeparator2;
+    private javax.swing.JMenuBar main_menuBar;
     private javax.swing.JMenuItem menu_howto;
     private javax.swing.JMenuItem menu_quit;
     private javax.swing.JMenuItem menu_start;
     private javax.swing.JMenuItem menu_stop;
     private javax.swing.JProgressBar progress;
+    private javax.swing.JLabel q_lbl;
+    private javax.swing.JPanel queuePanel;
+    private javax.swing.JList show_q;
     private javax.swing.JLabel show_save;
     private javax.swing.JButton start_btn;
     private javax.swing.JLabel status;
+    private javax.swing.JLabel status_lbl;
     private javax.swing.JButton stop_btn;
     private javax.swing.JTextField url;
+    private javax.swing.JLabel url_lbl;
+    private javax.swing.JTextField url_q;
+    private javax.swing.JCheckBox use_q;
     // End of variables declaration//GEN-END:variables
 }
